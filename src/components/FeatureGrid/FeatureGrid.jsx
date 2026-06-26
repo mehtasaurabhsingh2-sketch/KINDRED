@@ -1,9 +1,11 @@
 import React from 'react';
 import ModeCard from '../ModeCard/ModeCard';
-import { modes } from '../../data/modes';
+import { personalities } from '../../data/personalities';
 import './FeatureGrid.css';
 
 const FeatureGrid = () => {
+  const modes = Object.values(personalities);
+  
   return (
     <section id="modes" className="feature-grid-section">
       <div className="feature-grid-header">

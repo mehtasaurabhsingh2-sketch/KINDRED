@@ -1,9 +1,20 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, MessageSquare, Settings, Users } from 'lucide-react';
+import React, { useContext, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, MessageSquare, Settings, Users, LogOut } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
+  const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    navigate('/login');
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-section">
@@ -27,9 +38,18 @@ const Sidebar = () => {
       </div>
 
       <div className="sidebar-section" style={{ marginTop: 'auto' }}>
-        <button className="sidebar-link" style={{ width: '100%', textAlign: 'left' }}>
+        <NavLink to="/settings" className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}>
           <Settings size={20} className="sidebar-link-icon" />
           <span>Settings</span>
+        </NavLink>
+        <button 
+          className="sidebar-link" 
+          style={{ width: '100%', textAlign: 'left', color: '#ef4444' }}
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+        >
+          <LogOut size={20} className="sidebar-link-icon" />
+          <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
         </button>
       </div>
     </aside>
