@@ -39,11 +39,25 @@
   transform: translateY(-5px);
 }
 
-.benefit-icon {
-  color: var(--color-primary);
-  background-color: rgba(99, 102, 241, 0.1);
+.benefit-icon-wrapper {
+  background-color: var(--color-bg);
   padding: 1rem;
   border-radius: 50%;
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  transition: all var(--transition-normal);
+}
+
+.benefit-card:hover .benefit-icon-wrapper {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 15px var(--color-primary-hover);
+}
+
+.benefit-icon {
+  color: var(--color-primary);
 }
 
 .benefit-title {

@@ -43,7 +43,7 @@ export const registerUser = async (email, password, displayName) => {
       photoURL: user.photoURL || '',
       createdAt: new Date().toISOString(),
       favoriteMode: 'friend',
-      theme: 'dark'
+      themeId: 'aurora'
     });
     
     return { user, error: null };
@@ -80,7 +80,7 @@ export const loginWithGoogle = async () => {
         photoURL: user.photoURL || '',
         createdAt: new Date().toISOString(),
         favoriteMode: 'friend',
-        theme: 'dark'
+        themeId: 'aurora'
       });
     }
     

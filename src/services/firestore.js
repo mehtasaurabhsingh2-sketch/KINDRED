@@ -198,3 +198,30 @@ export const updateUserPreferences = async (_userId, _preferences) => {
   return { error: "Not implemented" };
 };
 
+export const updateUserTheme = async (userId, themeId) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      themeId: themeId,
+      updatedAt: new Date().toISOString()
+    });
+    return { error: null };
+  } catch (error) {
+    console.error("Error updating user theme:", error);
+    return { error: error.message };
+  }
+};
+
+export const getUserTheme = async (userId) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists() && docSnap.data().themeId) {
+      return { themeId: docSnap.data().themeId, error: null };
+    }
+    return { themeId: null, error: null };
+  } catch (error) {
+    console.error("Error fetching user theme:", error);
+    return { themeId: null, error: error.message };
+  }
+};

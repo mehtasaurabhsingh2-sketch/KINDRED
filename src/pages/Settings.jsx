@@ -3,15 +3,17 @@ import Sidebar from '../components/Sidebar/Sidebar';
 import { AuthContext } from '../context/AuthContext';
 import { updateUserProfile } from '../services/firestore';
 import { Loader2 } from 'lucide-react';
+import { ThemeContext } from '../context/ThemeContext';
+import { themes } from '../data/themes';
 import { personalities } from '../data/personalities';
 import './Settings.css';
 
 const Settings = () => {
   const { currentUser, userProfile, setUserProfile } = useContext(AuthContext);
+  const { theme: activeThemeId, setTheme: setActiveTheme } = useContext(ThemeContext);
   
   const [displayName, setDisplayName] = useState('');
   const [favoriteMode, setFavoriteMode] = useState('friend');
-  const [theme, setTheme] = useState('dark');
   
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -22,7 +24,6 @@ const Settings = () => {
     if (userProfile) {
       setDisplayName(userProfile.displayName || '');
       setFavoriteMode(userProfile.favoriteMode || 'friend');
-      setTheme(userProfile.theme || 'dark');
     }
   }, [userProfile]);
 
@@ -36,7 +37,6 @@ const Settings = () => {
     const updates = {
       displayName,
       favoriteMode,
-      theme,
     };
 
     const { error } = await updateUserProfile(currentUser.uid, updates);
@@ -99,14 +99,15 @@ const Settings = () => {
             </div>
 
             <div className="settings-group">
-              <label htmlFor="theme">Theme Preference</label>
+              <label htmlFor="theme">Kindred Theme</label>
               <select 
                 id="theme" 
-                value={theme} 
-                onChange={(e) => setTheme(e.target.value)}
+                value={activeThemeId} 
+                onChange={(e) => setActiveTheme(e.target.value)}
               >
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
+                {themes.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
               </select>
             </div>
 

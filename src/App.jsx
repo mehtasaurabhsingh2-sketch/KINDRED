@@ -5,20 +5,25 @@ import Footer from './components/Footer/Footer';
 import AppRoutes from './routes/AppRoutes';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import StyleSwitcher from './components/StyleSwitcher/StyleSwitcher';
 
 function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <Router>
-          <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Navbar />
-            <div style={{ flex: 1 }}>
-              <AppRoutes />
+        <ThemeProvider>
+          <Router>
+            <StyleSwitcher />
+            <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <Navbar />
+              <div style={{ flex: 1 }}>
+                <AppRoutes />
+              </div>
+              <Footer />
             </div>
-            <Footer />
-          </div>
-        </Router>
+          </Router>
+        </ThemeProvider>
       </AppProvider>
     </AuthProvider>
   );
