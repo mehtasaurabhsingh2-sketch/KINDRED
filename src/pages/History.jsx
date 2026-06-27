@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, Calendar, ChevronRight } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Calendar, ChevronRight, Trash2 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
-import { getPaginatedUserConversations } from '../services/firestore';
+import { getPaginatedUserConversations, deleteConversation } from '../services/firestore';
 import { personalities } from '../data/personalities';
 import LoadingSpinner from '../components/LoadingSpinner';
 import * as Icons from 'lucide-react';
@@ -70,6 +70,24 @@ const History = () => {
     navigate(`/chat?mode=${modeId}&cid=${conversationId}`);
   };
 
+  const handleDelete = async (e, conversationId) => {
+    e.stopPropagation(); // Prevent opening the chat when clicking delete
+    
+    const confirmDelete = window.confirm("Are you sure you want to permanently delete this conversation?");
+    if (!confirmDelete) return;
+
+    // Optimistically update UI
+    setConversations(prev => prev.filter(c => c.id !== conversationId));
+
+    const { error } = await deleteConversation(conversationId);
+    if (error) {
+      console.error("Failed to delete:", error);
+      alert("Failed to delete conversation. Please try again.");
+      // If it fails, refresh the list to ensure accurate state
+      fetchChats();
+    }
+  };
+
   if (isLoading && conversations.length === 0) {
     return (
       <div className="history-container loading-container">
@@ -125,7 +143,15 @@ const History = () => {
                     </div>
                   </div>
                   <div className="history-card-action">
-                    <ChevronRight size={20} />
+                    <button 
+                      className="delete-chat-btn" 
+                      onClick={(e) => handleDelete(e, chat.id)}
+                      title="Delete Conversation"
+                      aria-label="Delete Conversation"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                    <ChevronRight size={20} style={{ marginLeft: '10px' }} />
                   </div>
                 </div>
               );

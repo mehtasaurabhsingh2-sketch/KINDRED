@@ -9,7 +9,8 @@ import {
   orderBy,
   updateDoc,
   limit,
-  startAfter
+  startAfter,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -100,6 +101,31 @@ export const getPaginatedUserConversations = async (userId, lastVisibleDoc = nul
     return { conversations: convos, lastVisible, error: null };
   } catch (error) {
     return { conversations: [], lastVisible: null, error: error.message };
+  }
+};
+
+// Helper to delete a conversation and its messages
+export const deleteConversation = async (conversationId) => {
+  try {
+    // 1. Delete all messages in the conversation
+    const messagesQuery = query(
+      collection(db, 'messages'),
+      where('conversationId', '==', conversationId)
+    );
+    const messagesSnapshot = await getDocs(messagesQuery);
+    
+    const deletePromises = messagesSnapshot.docs.map(messageDoc => 
+      deleteDoc(doc(db, 'messages', messageDoc.id))
+    );
+    await Promise.all(deletePromises);
+
+    // 2. Delete the conversation document itself
+    await deleteDoc(doc(db, 'conversations', conversationId));
+
+    return { error: null };
+  } catch (error) {
+    console.error("Error deleting conversation:", error);
+    return { error: error.message };
   }
 };
 
