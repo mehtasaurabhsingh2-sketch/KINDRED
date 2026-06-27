@@ -7,7 +7,9 @@ import {
   query, 
   where, 
   orderBy,
-  updateDoc
+  updateDoc,
+  limit,
+  startAfter
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -66,6 +68,38 @@ export const getUserConversations = async (userId) => {
     return { conversations: convos, error: null };
   } catch (error) {
     return { conversations: [], error: error.message };
+  }
+};
+
+// Helper to get paginated user conversations
+export const getPaginatedUserConversations = async (userId, lastVisibleDoc = null, limitCount = 10) => {
+  try {
+    let q;
+    if (lastVisibleDoc) {
+      q = query(
+        collection(db, 'conversations'),
+        where('userId', '==', userId),
+        orderBy('updatedAt', 'desc'),
+        startAfter(lastVisibleDoc),
+        limit(limitCount)
+      );
+    } else {
+      q = query(
+        collection(db, 'conversations'),
+        where('userId', '==', userId),
+        orderBy('updatedAt', 'desc'),
+        limit(limitCount)
+      );
+    }
+    const snapshot = await getDocs(q);
+    const convos = snapshot.docs.map(d => d.data());
+    
+    // Return the last document for the next pagination query
+    const lastVisible = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+    
+    return { conversations: convos, lastVisible, error: null };
+  } catch (error) {
+    return { conversations: [], lastVisible: null, error: error.message };
   }
 };
 

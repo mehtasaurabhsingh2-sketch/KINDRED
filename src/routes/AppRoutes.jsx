@@ -10,6 +10,7 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
 const Settings = lazy(() => import('../pages/Settings'));
+const History = lazy(() => import('../pages/History'));
 
 const AppRoutes = () => {
   return (
@@ -28,6 +29,11 @@ const AppRoutes = () => {
         <Route path="/chat" element={
           <ProtectedRoute>
             <Chat />
+          </ProtectedRoute>
+        } />
+        <Route path="/history" element={
+          <ProtectedRoute>
+            <History />
           </ProtectedRoute>
         } />
         <Route path="/settings" element={

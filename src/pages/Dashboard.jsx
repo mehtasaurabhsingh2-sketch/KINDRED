@@ -67,7 +67,7 @@ const Dashboard = () => {
           <section className="dashboard-section">
             <div className="section-header">
               <h2 className="section-title">Recent Chats</h2>
-              <Link to="/chat" className="view-all">View All</Link>
+              <Link to="/history" className="view-all">View All</Link>
             </div>
             <div className="recent-chats-grid">
               {recentChats.map(convo => {

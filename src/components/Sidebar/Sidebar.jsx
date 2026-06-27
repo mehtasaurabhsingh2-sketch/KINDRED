@@ -23,7 +23,7 @@ const Sidebar = () => {
           <LayoutDashboard size={20} className="sidebar-link-icon" />
           <span>Dashboard</span>
         </NavLink>
-        <NavLink to="/chat" className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}>
+        <NavLink to="/history" className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}>
           <MessageSquare size={20} className="sidebar-link-icon" />
           <span>Recent Chats</span>
         </NavLink>
