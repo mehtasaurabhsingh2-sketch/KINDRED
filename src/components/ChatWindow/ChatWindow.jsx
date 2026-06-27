@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import ChatBubble from '../ChatBubble/ChatBubble';
-import { saveMessage } from '../../services/firestore';
+import { saveMessage } from '../../services/firestore'; // Leaving for potential fallback if needed
+import { AuthContext } from '../../context/AuthContext';
+import { useContext } from 'react';
 import LoadingSpinner from '../LoadingSpinner';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -12,6 +14,8 @@ const ChatWindow = ({ mode, conversationId }) => {
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const { currentUser } = useContext(AuthContext);
   const messagesEndRef = useRef(null);
   
   const IconComponent = Icons[mode.icon] || Icons.Smile;
@@ -45,13 +49,39 @@ const ChatWindow = ({ mode, conversationId }) => {
   }, [conversationId]);
 
   const handleSend = useCallback(async () => {
-    if (inputText.trim() === '') return;
+    if (inputText.trim() === '' || isSending || !currentUser) return;
     const textToSend = inputText.trim();
     setInputText(''); // Optimistic clear
+    setIsSending(true);
     
-    // Save user message to Firestore
-    await saveMessage(conversationId, 'user', textToSend, mode.id);
-  }, [inputText, conversationId, mode.id]);
+    try {
+      const token = await currentUser.getIdToken();
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      
+      const response = await fetch(`${apiUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: textToSend,
+          conversationId,
+          mode: mode.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // In a production app, we would restore the input text or show a toast notification here
+      setInputText(textToSend); 
+    } finally {
+      setIsSending(false);
+    }
+  }, [inputText, conversationId, mode.id, currentUser, isSending]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -102,6 +132,14 @@ const ChatWindow = ({ mode, conversationId }) => {
         <div ref={messagesEndRef} />
       </div>
 
+      {isSending && (
+        <div className="ai-typing-indicator">
+          <span className="typing-dot"></span>
+          <span className="typing-dot"></span>
+          <span className="typing-dot"></span>
+        </div>
+      )}
+
       <div className="chat-input-area">
         <div className="chat-input-wrapper">
           <textarea
@@ -116,7 +154,7 @@ const ChatWindow = ({ mode, conversationId }) => {
           <button 
             className="chat-send-btn"
             onClick={handleSend}
-            disabled={inputText.trim() === ''}
+            disabled={inputText.trim() === '' || isSending}
             aria-label="Send message"
           >
             <Send size={18} />
