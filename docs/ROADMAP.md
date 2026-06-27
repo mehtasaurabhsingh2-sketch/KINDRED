@@ -16,8 +16,17 @@
 - Centralized personalities
 - Safety and Memory layers defined
 
+## Phase 2.6: Production Hardening (Complete)
+- Error handling
+- Input validation
+- React performance optimizations
+
+## Phase 2.9: LLM Integration (Complete)
+- Integrate Gemini 2.5 Flash / Claude 3.5 Sonnet
+- Implement provider.js
+- Streaming UI updates
+
 ## Phase 3: AI Integration (Next)
-- Implement `provider.js` with an LLM API (e.g. Gemini, OpenAI)
 - Construct dynamic prompts using history
 - Handle Markdown and streaming UI updates
 

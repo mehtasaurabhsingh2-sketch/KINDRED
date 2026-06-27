@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import ChatBubble from '../ChatBubble/ChatBubble';
-import { saveMessage, getMessages } from '../../services/firestore';
+import { saveMessage } from '../../services/firestore';
 import LoadingSpinner from '../LoadingSpinner';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -44,27 +44,27 @@ const ChatWindow = ({ mode, conversationId }) => {
     return () => unsubscribe();
   }, [conversationId]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (inputText.trim() === '') return;
     const textToSend = inputText.trim();
     setInputText(''); // Optimistic clear
     
     // Save user message to Firestore
     await saveMessage(conversationId, 'user', textToSend, mode.id);
-  };
+  }, [inputText, conversationId, mode.id]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-  };
+  }, [handleSend]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     if (e.target.value.length <= MAX_CHARS) {
       setInputText(e.target.value);
     }
-  };
+  }, []);
 
   if (isLoading) {
     return (

@@ -20,4 +20,4 @@ const ChatBubble = ({ message }) => {
   );
 };
 
-export default ChatBubble;
+export default React.memo(ChatBubble);

@@ -7,6 +7,29 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
 
+const mapAuthError = (error) => {
+  switch (error.code) {
+    case 'auth/email-already-in-use':
+      return 'This email is already registered. Please log in.';
+    case 'auth/invalid-email':
+      return 'The email address is invalid.';
+    case 'auth/weak-password':
+      return 'The password is too weak. It must be at least 6 characters.';
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Invalid email or password.';
+    case 'auth/too-many-requests':
+      return 'Too many failed login attempts. Please try again later.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your internet connection.';
+    case 'auth/popup-closed-by-user':
+      return 'Google sign-in was cancelled.';
+    default:
+      return error.message || 'An unexpected error occurred. Please try again.';
+  }
+};
+
 export const registerUser = async (email, password, displayName) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -25,7 +48,8 @@ export const registerUser = async (email, password, displayName) => {
     
     return { user, error: null };
   } catch (error) {
-    return { user: null, error: error.message };
+    console.error("Registration error:", error);
+    return { user: null, error: mapAuthError(error) };
   }
 };
 
@@ -34,7 +58,8 @@ export const loginUser = async (email, password) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
   } catch (error) {
-    return { user: null, error: error.message };
+    console.error("Login error:", error);
+    return { user: null, error: mapAuthError(error) };
   }
 };
 
@@ -61,7 +86,8 @@ export const loginWithGoogle = async () => {
     
     return { user, error: null };
   } catch (error) {
-    return { user: null, error: error.message };
+    console.error("Google login error:", error);
+    return { user: null, error: mapAuthError(error) };
   }
 };
 
@@ -70,6 +96,7 @@ export const logoutUser = async () => {
     await firebaseSignOut(auth);
     return { error: null };
   } catch (error) {
-    return { error: error.message };
+    console.error("Logout error:", error);
+    return { error: mapAuthError(error) };
   }
 };

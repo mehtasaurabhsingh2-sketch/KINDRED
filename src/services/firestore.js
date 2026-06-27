@@ -183,17 +183,17 @@ export const getConversationSummary = async (conversationId) => {
   return { summary: null, error: "Not implemented" };
 };
 
-export const saveUserMemory = async (userId, key, value) => {
+export const saveUserMemory = async (_userId, _key, _value) => {
   // TODO: Phase 3 - Store long-term facts about the user (e.g. "User has a dog named Max")
   return { memory: null, error: "Not implemented" };
 };
 
-export const getUserMemories = async (userId) => {
+export const getUserMemories = async (_userId) => {
   // TODO: Phase 3 - Retrieve all long-term memories
   return { memories: [], error: "Not implemented" };
 };
 
-export const updateUserPreferences = async (userId, preferences) => {
+export const updateUserPreferences = async (_userId, _preferences) => {
   // TODO: Phase 3 - Store AI-specific preferences (e.g. verbosity, custom instructions)
   return { error: "Not implemented" };
 };

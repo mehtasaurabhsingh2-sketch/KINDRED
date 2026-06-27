@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Calendar, ChevronRight, Trash2 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
@@ -18,7 +18,7 @@ const History = () => {
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchChats = async (isLoadMore = false) => {
+  const fetchChats = useCallback(async (isLoadMore = false) => {
     if (!currentUser) return;
     
     if (isLoadMore) {
@@ -50,11 +50,11 @@ const History = () => {
 
     setIsLoading(false);
     setIsLoadingMore(false);
-  };
+  }, [currentUser, lastVisible]);
 
   useEffect(() => {
     fetchChats();
-  }, [currentUser]);
+  }, [fetchChats]);
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
