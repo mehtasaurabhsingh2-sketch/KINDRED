@@ -72,11 +72,13 @@ const ChatWindow = ({ mode, conversationId }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to send message to the backend. Is the server running?');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      // In a production app, we would restore the input text or show a toast notification here
+      alert(`Error: ${error.message}\n\nPlease check that your backend server is running and your API keys are configured in server/.env`);
+      // Restore the input text so they don't lose their message
       setInputText(textToSend); 
     } finally {
       setIsSending(false);
