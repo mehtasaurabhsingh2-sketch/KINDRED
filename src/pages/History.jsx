@@ -9,7 +9,7 @@ import * as Icons from 'lucide-react';
 import './History.css';
 
 const History = () => {
-  const { user } = useContext(AuthContext);
+  const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   
   const [conversations, setConversations] = useState([]);
@@ -19,7 +19,7 @@ const History = () => {
   const [hasMore, setHasMore] = useState(true);
 
   const fetchChats = async (isLoadMore = false) => {
-    if (!user) return;
+    if (!currentUser) return;
     
     if (isLoadMore) {
       setIsLoadingMore(true);
@@ -28,7 +28,7 @@ const History = () => {
     }
 
     const { conversations: newChats, lastVisible: newLastVisible, error } = await getPaginatedUserConversations(
-      user.uid, 
+      currentUser.uid, 
       isLoadMore ? lastVisible : null, 
       10
     );
@@ -54,7 +54,7 @@ const History = () => {
 
   useEffect(() => {
     fetchChats();
-  }, [user]);
+  }, [currentUser]);
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
