@@ -16,9 +16,30 @@ const app = express();
 // 1. Security Headers
 app.use(helmet());
 
-// 2. CORS (Allow only specific frontend origin)
+// Parse CORS_ORIGIN as a comma-separated list, defaulting to localhost
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(url => url.trim())
+  : ['http://localhost:5173'];
+
+// 2. CORS (Dynamic Origin Resolution for Vercel)
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin matches our explicit allowed list
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    
+    // Automatically allow Vercel preview deployments for CI/CD flexibility
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    // If it doesn't match, block it for security
+    return callback(new Error('Blocked by CORS policy'), false);
+  },
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
