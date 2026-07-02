@@ -2,7 +2,8 @@ import React from 'react';
 import './ChatBubble.css';
 
 const ChatBubble = ({ message }) => {
-  const isUser = message.sender === 'user';
+  // Use message.role (from Firestore) or fallback to message.sender
+  const isUser = message.role === 'user' || message.sender === 'user';
   
   const formatTime = (isoString) => {
     if (!isoString) return '';
