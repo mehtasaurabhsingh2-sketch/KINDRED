@@ -51,8 +51,22 @@ const ChatWindow = ({ mode, conversationId }) => {
   const handleSend = useCallback(async () => {
     if (inputText.trim() === '' || isSending || !currentUser) return;
     const textToSend = inputText.trim();
-    setInputText(''); // Optimistic clear
+    
+    // Optimistic UI Update: Instantly show the user's message on screen
+    const optimisticMessage = {
+      role: 'user',
+      text: textToSend,
+      timestamp: new Date().toISOString()
+    };
+    
+    setMessages(prev => [...prev, optimisticMessage]);
+    setInputText(''); 
     setIsSending(true);
+    
+    // Force a scroll down instantly for the optimistic message
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
     
     try {
       const token = await currentUser.getIdToken();
