@@ -29,10 +29,11 @@ const morganMiddleware = morgan((tokens, req, res) => {
     timestamp: new Date().toISOString(),
     method: tokens.method(req, res),
     url: tokens.url(req, res),
-    status: tokens.status(req, res),
-    responseTime: tokens['response-time'](req, res) + ' ms',
+    status: parseInt(tokens.status(req, res), 10),
+    duration: parseInt(tokens['response-time'](req, res) || '0', 10),
     requestId: req.requestId, // Unique ID added by requestLogger middleware
-    userId: req.user?.uid || 'anonymous' // Avoid logging PII like email
+    userId: req.user?.uid || 'anonymous', // Avoid logging PII like email
+    conversationId: req.body?.conversationId || req.query?.conversationId || undefined
   });
 });
 

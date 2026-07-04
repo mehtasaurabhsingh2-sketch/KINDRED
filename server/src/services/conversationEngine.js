@@ -65,7 +65,7 @@ const processChatRequest = async ({ userId, conversationId, message, mode, reqId
     const latency = Date.now() - startTime;
 
     // 5. Save AI Message
-    await saveMessage(conversationId, 'assistant', response.text, mode);
+    await saveMessage(conversationId, 'assistant', response.text, mode, response.metadata);
 
     // Log privacy-safe metadata
     logInfo('AI Request Successful', {

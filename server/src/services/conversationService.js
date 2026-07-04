@@ -3,7 +3,7 @@ const { db } = require('../config/firebaseAdmin');
 /**
  * Persists a message to Firestore.
  */
-const saveMessage = async (conversationId, role, text, mode) => {
+const saveMessage = async (conversationId, role, text, mode, metadata = null) => {
   if (!db) {
     console.warn('Firebase Admin is not connected. Skipping saveMessage.');
     return null;
@@ -15,7 +15,8 @@ const saveMessage = async (conversationId, role, text, mode) => {
     role, // 'user' or 'assistant'
     text,
     mode,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    ...(metadata && { metadata })
   };
 
   const docRef = await messagesRef.add(newMessage);
