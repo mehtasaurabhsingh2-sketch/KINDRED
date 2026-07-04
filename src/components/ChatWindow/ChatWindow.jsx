@@ -87,7 +87,7 @@ const ChatWindow = ({ mode, conversationId }) => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Failed to send message to the backend. Is the server running?');
+        throw new Error(errorData?.error?.message || errorData?.message || 'Failed to send message to the backend.');
       }
     } catch (error) {
       console.error('Error sending message:', error);

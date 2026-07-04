@@ -3,25 +3,14 @@ const { db } = require('../config/firebaseAdmin');
 const checkHealth = async (req, res, next) => {
   try {
     const isFirebaseConnected = db !== null;
-    
-    // We don't do a full DB query, just check if the instance exists
-    // A robust check might do a lightweight read if strictly necessary
+    const isGeminiConfigured = !!process.env.GEMINI_API_KEY;
 
     res.status(200).json({
-      success: true,
-      message: 'Server is healthy',
-      data: {
-        status: 'OK',
-        uptime: process.uptime(),
-        version: process.env.npm_package_version || '1.0.0',
-        environment: process.env.NODE_ENV,
-        firebaseStatus: isFirebaseConnected ? 'Connected' : 'Disconnected/Skipped',
-        providerConfiguration: {
-          provider: process.env.AI_PROVIDER || 'gemini',
-          model: process.env.GEMINI_MODEL || 'default'
-        },
-        timestamp: new Date().toISOString()
-      }
+      status: 'ok',
+      firebase: isFirebaseConnected,
+      gemini: isGeminiConfigured,
+      uptime: Math.floor(process.uptime()),
+      version: process.env.npm_package_version || '0.3.0'
     });
   } catch (error) {
     next(error);

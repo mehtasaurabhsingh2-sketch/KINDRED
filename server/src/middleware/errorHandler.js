@@ -13,13 +13,16 @@ const errorHandler = (err, req, res, next) => {
   });
 
   const statusCode = err.statusCode || 500;
+  const errorCode = err.errorCode || 'INTERNAL_ERROR';
   const message = err.isOperational ? err.message : 'Internal Server Error';
 
   res.status(statusCode).json({
     success: false,
-    message,
-    data: null,
-    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    error: {
+      code: errorCode,
+      message: message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    }
   });
 };
 
