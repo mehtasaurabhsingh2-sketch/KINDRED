@@ -18,6 +18,10 @@ const processChatRequest = async ({ userId, conversationId, message, mode, reqId
     // 2. Fetch Context (Recent History)
     const recentMessages = await getRecentMessages(conversationId, aiConfig.maxHistory);
     
+    const { buildSystemPrompt, personalitiesConfig } = require('./promptService');
+    const { PERSONALITIES } = require('../constants');
+    const config = personalitiesConfig[mode] || personalitiesConfig[PERSONALITIES.FRIEND];
+
     // 3. Build Prompt Layers
     const systemPrompt = buildSystemPrompt({ mode, userProfile: {}, conversationSummary: '' });
 
@@ -34,7 +38,8 @@ const processChatRequest = async ({ userId, conversationId, message, mode, reqId
           systemPrompt,
           messages: recentMessages,
           generationConfig: {
-            temperature: parseFloat(process.env.DEFAULT_TEMPERATURE || '0.7')
+            temperature: config.generationConfig?.temperature ?? parseFloat(process.env.DEFAULT_TEMPERATURE || '0.7'),
+            maxOutputTokens: config.generationConfig?.maxOutputTokens ?? undefined
           }
         });
 
@@ -65,7 +70,12 @@ const processChatRequest = async ({ userId, conversationId, message, mode, reqId
     const latency = Date.now() - startTime;
 
     // 5. Save AI Message
-    await saveMessage(conversationId, 'assistant', response.text, mode, response.metadata);
+    const enrichedMetadata = {
+      ...response.metadata,
+      personality: config.id,
+      version: config.version
+    };
+    await saveMessage(conversationId, 'assistant', response.text, mode, enrichedMetadata);
 
     // Log privacy-safe metadata
     logInfo('AI Request Successful', {

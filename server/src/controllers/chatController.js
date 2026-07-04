@@ -1,5 +1,54 @@
 const { processChatRequest } = require('../services/conversationEngine');
+const { saveMessage } = require('../services/conversationService');
+const { db } = require('../config/firebaseAdmin');
 const { logError } = require('../utils/logger');
+const personalitiesConfig = require('../config/personalities');
+const { PERSONALITIES } = require('../constants');
+
+const handleInitChat = async (req, res, next) => {
+  try {
+    const { mode, title } = req.body;
+    const userId = req.user.uid;
+    const reqId = req.requestId;
+
+    if (!mode) {
+      return res.status(400).json({ success: false, message: 'Missing required field: mode' });
+    }
+
+    const config = personalitiesConfig[mode] || personalitiesConfig[PERSONALITIES.FRIEND];
+    const conversationId = `${userId}_${mode}_${Date.now()}`;
+    const timestamp = new Date().toISOString();
+
+    // 1. Create Conversation Document
+    await db.collection('conversations').doc(conversationId).set({
+      id: conversationId,
+      userId,
+      mode,
+      title: title || `${config.name} Conversation`,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    });
+
+    // 2. Insert AI Greeting Message
+    const enrichedMetadata = {
+      provider: 'system',
+      personality: config.id,
+      version: config.version,
+      latency: 0,
+      finishReason: 'GREETING'
+    };
+    
+    await saveMessage(conversationId, 'assistant', config.greeting, mode, enrichedMetadata);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Conversation initialized successfully',
+      data: { conversationId }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const handleChat = async (req, res, next) => {
   try {
@@ -59,6 +108,7 @@ const handleTitle = async (req, res, next) => {
 };
 
 module.exports = {
+  handleInitChat,
   handleChat,
   handleTitle
 };
