@@ -4,7 +4,8 @@ import Sidebar from '../components/Sidebar/Sidebar';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
 import { personalities } from '../data/personalities';
 import { AuthContext } from '../context/AuthContext';
-import { createConversation, getUserConversations } from '../services/firestore';
+import { getUserConversations } from '../services/firestore';
+import { createConversationApi } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import './Chat.css';
 
@@ -24,21 +25,29 @@ const Chat = () => {
     const initializeChat = async () => {
       if (modeId && !cid && currentUser) {
         setIsInitializing(true);
-        // Check if there is an existing conversation for this mode, else create one
-        const { conversations } = await getUserConversations(currentUser.uid);
-        const existingConvo = conversations.find(c => c.mode === modeId);
-        
-        if (existingConvo) {
-          navigate(`/chat?mode=${modeId}&cid=${existingConvo.id}`, { replace: true });
-        } else {
-          // Create new conversation
-          const title = `${personalities[modeId]?.name || 'New'} Conversation`;
-          const { conversation } = await createConversation(currentUser.uid, modeId, title);
-          if (conversation) {
-            navigate(`/chat?mode=${modeId}&cid=${conversation.id}`, { replace: true });
+        try {
+          // Check if there is an existing conversation for this mode
+          const { conversations } = await getUserConversations(currentUser.uid);
+          const existingConvo = conversations.find(c => c.mode === modeId);
+          
+          if (existingConvo) {
+            navigate(`/chat?mode=${modeId}&cid=${existingConvo.id}`, { replace: true });
+          } else {
+            // Create new conversation via backend API to ensure greeting is initialized
+            const token = await currentUser.getIdToken();
+            const title = `${personalities[modeId]?.name || 'New'} Conversation`;
+            const { conversationId } = await createConversationApi(token, modeId, title);
+            
+            if (conversationId) {
+              navigate(`/chat?mode=${modeId}&cid=${conversationId}`, { replace: true });
+            }
           }
+        } catch (err) {
+          console.error("Failed to initialize chat:", err);
+          alert("Failed to initialize conversation. Please ensure the backend is running.");
+        } finally {
+          setIsInitializing(false);
         }
-        setIsInitializing(false);
       } else if (cid) {
         setActiveConvoId(cid);
       }

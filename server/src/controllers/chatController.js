@@ -5,7 +5,7 @@ const { logError } = require('../utils/logger');
 const personalitiesConfig = require('../config/personalities');
 const { PERSONALITIES } = require('../constants');
 
-const handleInitChat = async (req, res, next) => {
+const handleCreateConversation = async (req, res, next) => {
   try {
     const { mode, title } = req.body;
     const userId = req.user.uid;
@@ -108,7 +108,7 @@ const handleTitle = async (req, res, next) => {
 };
 
 module.exports = {
-  handleInitChat,
+  handleCreateConversation,
   handleChat,
   handleTitle
 };
