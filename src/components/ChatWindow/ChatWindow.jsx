@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import { Send } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import ChatBubble from '../ChatBubble/ChatBubble';
 import { saveMessage } from '../../services/firestore'; // Leaving for potential fallback if needed
 import { AuthContext } from '../../context/AuthContext';
-import { useContext } from 'react';
 import LoadingSpinner from '../LoadingSpinner';
+import Notification from '../Notification/Notification';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import './ChatWindow.css';
@@ -15,6 +15,8 @@ const ChatWindow = ({ mode, conversationId }) => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState(null);
+  const [failedText, setFailedText] = useState('');
   const { currentUser } = useContext(AuthContext);
   const messagesEndRef = useRef(null);
   
@@ -48,10 +50,14 @@ const ChatWindow = ({ mode, conversationId }) => {
     return () => unsubscribe();
   }, [conversationId]);
 
-  const handleSend = useCallback(async () => {
-    if (inputText.trim() === '' || isSending || !currentUser) return;
-    const textToSend = inputText.trim();
+  const handleSend = useCallback(async (retryMessage = null) => {
+    const textToSend = typeof retryMessage === 'string' ? retryMessage : inputText.trim();
+    if (textToSend === '' || isSending || !currentUser) return;
     
+    // Clear previous errors
+    setError(null);
+    setFailedText('');
+
     // Optimistic UI Update: Instantly show the user's message on screen
     const optimisticMessage = {
       role: 'user',
@@ -60,7 +66,9 @@ const ChatWindow = ({ mode, conversationId }) => {
     };
     
     setMessages(prev => [...prev, optimisticMessage]);
-    setInputText(''); 
+    if (typeof retryMessage !== 'string') {
+      setInputText(''); 
+    }
     setIsSending(true);
     
     // Force a scroll down instantly for the optimistic message
@@ -89,11 +97,16 @@ const ChatWindow = ({ mode, conversationId }) => {
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.error?.message || errorData?.message || 'Failed to send message to the backend.');
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      alert(`Error: ${error.message}\n\nPlease check that your backend server is running and your API keys are configured in server/.env`);
-      // Restore the input text so they don't lose their message
-      setInputText(textToSend); 
+    } catch (err) {
+      console.error('Error sending message:', err);
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => m !== optimisticMessage));
+      setError(err.message || 'Unable to reach the server.');
+      setFailedText(textToSend);
+      // Restore the input text so they don't lose their message if they don't use retry
+      if (typeof retryMessage !== 'string') {
+        setInputText(textToSend); 
+      }
     } finally {
       setIsSending(false);
     }
@@ -153,6 +166,17 @@ const ChatWindow = ({ mode, conversationId }) => {
           <span className="typing-dot"></span>
           <span className="typing-dot"></span>
           <span className="typing-dot"></span>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: '0 16px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+          <Notification 
+            message={error} 
+            type="error" 
+            onDismiss={() => setError(null)} 
+            onRetry={failedText ? () => handleSend(failedText) : null}
+          />
         </div>
       )}
 

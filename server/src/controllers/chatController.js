@@ -11,11 +11,17 @@ const handleCreateConversation = async (req, res, next) => {
     const userId = req.user.uid;
     const reqId = req.requestId;
 
-    if (!mode) {
-      return res.status(400).json({ success: false, message: 'Missing required field: mode' });
+    if (!mode || !personalitiesConfig[mode]) {
+      return res.status(400).json({ 
+        success: false, 
+        error: {
+          code: 'INVALID_PERSONALITY',
+          message: 'Unknown personality mode.'
+        }
+      });
     }
 
-    const config = personalitiesConfig[mode] || personalitiesConfig[PERSONALITIES.FRIEND];
+    const config = personalitiesConfig[mode];
     const conversationId = `${userId}_${mode}_${Date.now()}`;
     const timestamp = new Date().toISOString();
 
@@ -63,6 +69,25 @@ const handleChat = async (req, res, next) => {
         data: null
       });
     }
+    
+    if (mode && !personalitiesConfig[mode]) {
+      return res.status(400).json({ 
+        success: false, 
+        error: {
+          code: 'INVALID_PERSONALITY',
+          message: 'Unknown personality mode.'
+        }
+      });
+    }
+
+    // Verify Ownership
+    const convoDoc = await db.collection('conversations').doc(conversationId).get();
+    if (!convoDoc.exists) {
+      return res.status(404).json({ success: false, message: 'Conversation not found' });
+    }
+    if (convoDoc.data().userId !== userId) {
+      return res.status(403).json({ success: false, message: 'Forbidden: You do not own this conversation' });
+    }
 
     // Hand off to the orchestrator
     const result = await processChatRequest({
@@ -87,12 +112,22 @@ const handleChat = async (req, res, next) => {
 const handleTitle = async (req, res, next) => {
   try {
     const { conversationId } = req.body;
+    const userId = req.user.uid;
     if (!conversationId) {
       return res.status(400).json({
         success: false,
         message: 'Missing required field: conversationId',
         data: null
       });
+    }
+
+    // Verify Ownership
+    const convoDoc = await db.collection('conversations').doc(conversationId).get();
+    if (!convoDoc.exists) {
+      return res.status(404).json({ success: false, message: 'Conversation not found' });
+    }
+    if (convoDoc.data().userId !== userId) {
+      return res.status(403).json({ success: false, message: 'Forbidden: You do not own this conversation' });
     }
     
     // Placeholder for title generation

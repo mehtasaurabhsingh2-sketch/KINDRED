@@ -7,6 +7,7 @@ import { AuthContext } from '../context/AuthContext';
 import { getUserConversations } from '../services/firestore';
 import { createConversationApi } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Notification from '../components/Notification/Notification';
 import './Chat.css';
 
 const Chat = () => {
@@ -18,6 +19,7 @@ const Chat = () => {
   const { currentUser } = useContext(AuthContext);
   const [activeConvoId, setActiveConvoId] = useState(cid);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [error, setError] = useState(null);
 
   const selectedMode = personalities[modeId];
 
@@ -44,7 +46,7 @@ const Chat = () => {
           }
         } catch (err) {
           console.error("Failed to initialize chat:", err);
-          alert("Failed to initialize conversation. Please ensure the backend is running.");
+          setError("Failed to initialize conversation. Please ensure the backend is running.");
         } finally {
           setIsInitializing(false);
         }
@@ -60,7 +62,18 @@ const Chat = () => {
     <div className="chat-page-layout">
       <Sidebar />
       <main className="chat-main">
-        {isInitializing ? (
+        {error ? (
+          <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+            <Notification 
+              message={error} 
+              type="error" 
+              onDismiss={() => {
+                setError(null);
+                navigate('/dashboard#modes');
+              }} 
+            />
+          </div>
+        ) : isInitializing ? (
           <LoadingSpinner fullScreen={false} />
         ) : selectedMode && activeConvoId ? (
           <ChatWindow mode={selectedMode} conversationId={activeConvoId} />
