@@ -58,6 +58,7 @@ const processChatRequest = async ({ userId, conversationId, message, mode, reqId
         }
         
         if (attempt > maxRetries) {
+          console.error("Original AI Error before retry exhausted:", err);
           throw new AppError("The AI service is currently unavailable. Please try again later.", 502, "AI_ERROR");
         }
         

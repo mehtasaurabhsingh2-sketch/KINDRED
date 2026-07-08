@@ -56,11 +56,16 @@ const generateMessage = async ({ systemPrompt, messages, generationConfig = {} }
 
     // 3. Format the chat history for Gemini
     // Gemini expects an array of { role: 'user' | 'model', parts: [{ text }] }
-    // We assume 'messages' is an array of { role: 'user' | 'assistant', content: '...' }
-    const formattedHistory = (messages || []).slice(0, -1).map(msg => ({
+    let formattedHistory = (messages || []).slice(0, -1).map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }]
     }));
+    
+    // Gemini STRICTLY requires the history to start with a 'user' role.
+    // Since our DB stores the initial AI greeting first, we must drop any leading 'model' messages.
+    while (formattedHistory.length > 0 && formattedHistory[0].role === 'model') {
+      formattedHistory.shift();
+    }
     
     // The actual message to send is the last one in the array
     const latestMessage = messages && messages.length > 0 ? messages[messages.length - 1].content : '';
