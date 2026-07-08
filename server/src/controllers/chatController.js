@@ -1,4 +1,4 @@
-const { processChatRequest } = require('../services/conversationEngine');
+const { processChatRequest, processChatStream } = require('../services/conversationEngine');
 const { saveMessage } = require('../services/conversationService');
 const { db } = require('../config/firebaseAdmin');
 const { logError } = require('../utils/logger');
@@ -142,8 +142,63 @@ const handleTitle = async (req, res, next) => {
   }
 };
 
+/**
+ * SSE Streaming handler for POST /api/chat/stream
+ * Sets up Server-Sent Events, creates an AbortController, and delegates to the engine.
+ */
+const handleChatStream = async (req, res, next) => {
+  const { message, conversationId, mode } = req.body;
+  const userId = req.user.uid;
+  const reqId = req.requestId;
+
+  if (!message || !conversationId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields: message or conversationId'
+    });
+  }
+
+  if (mode && !personalitiesConfig[mode]) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'INVALID_PERSONALITY', message: 'Unknown personality mode.' }
+    });
+  }
+
+  // Verify Ownership
+  const convoDoc = await db.collection('conversations').doc(conversationId).get();
+  if (!convoDoc.exists) {
+    return res.status(404).json({ success: false, message: 'Conversation not found' });
+  }
+  if (convoDoc.data().userId !== userId) {
+    return res.status(403).json({ success: false, message: 'Forbidden: You do not own this conversation' });
+  }
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Important for Nginx/Render proxies
+  res.flushHeaders();
+
+  // AbortController — cancelled when the client closes the connection
+  const controller = new AbortController();
+  req.on('close', () => controller.abort());
+
+  await processChatStream({
+    userId,
+    conversationId,
+    message,
+    mode: mode || 'friend',
+    res,
+    signal: controller.signal,
+    reqId
+  });
+};
+
 module.exports = {
   handleCreateConversation,
   handleChat,
-  handleTitle
+  handleTitle,
+  handleChatStream
 };

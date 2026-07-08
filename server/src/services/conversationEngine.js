@@ -109,5 +109,93 @@ const processChatRequest = async ({ userId, conversationId, message, mode, reqId
 };
 
 module.exports = {
-  processChatRequest
+  processChatRequest,
+  processChatStream
 };
+
+/**
+ * Streams an AI response via Server-Sent Events (SSE).
+ * Architecture: provider (async generator) → engine (accumulates) → SSE writer → ONE Firestore write.
+ * The Gemini provider has zero knowledge of SSE or Firestore.
+ *
+ * @param {object} params - { userId, conversationId, message, mode, res, signal, reqId }
+ */
+async function processChatStream({ userId, conversationId, message, mode, res, signal, reqId }) {
+  const startTime = Date.now();
+
+  // Helper to send typed SSE events
+  const sendEvent = (event, data) => {
+    try {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    } catch (_) { /* connection may be closed */ }
+  };
+
+  try {
+    // 1. Save User Message immediately
+    await saveMessage(conversationId, 'user', message, mode);
+
+    // 2. Fetch Context + Build Prompt
+    const recentMessages = await getRecentMessages(conversationId, aiConfig.maxHistory);
+    const { buildSystemPrompt, personalitiesConfig } = require('./promptService');
+    const { PERSONALITIES } = require('../constants');
+    const config = personalitiesConfig[mode] || personalitiesConfig[PERSONALITIES.FRIEND];
+    const systemPrompt = buildSystemPrompt({ mode, userProfile: {}, conversationSummary: '' });
+
+    // 3. Get provider's async generator
+    const provider = getProvider();
+    const tokenStream = provider.generateMessageStream({
+      systemPrompt,
+      messages: recentMessages,
+      generationConfig: {
+        temperature: config.generationConfig?.temperature ?? parseFloat(process.env.DEFAULT_TEMPERATURE || '0.7'),
+        maxOutputTokens: config.generationConfig?.maxOutputTokens ?? undefined
+      },
+      signal
+    });
+
+    // 4. Send start event
+    sendEvent('start', { conversationId });
+
+    // 5. Stream tokens — accumulate in memory (NO per-token Firestore write)
+    let fullText = '';
+    for await (const chunk of tokenStream) {
+      if (signal?.aborted) break;
+      fullText += chunk;
+      sendEvent('token', { text: chunk });
+    }
+
+    const latency = Date.now() - startTime;
+
+    // 6. ONE single Firestore write after generation completes
+    if (fullText) {
+      const enrichedMetadata = {
+        provider: 'gemini',
+        model: aiConfig.model,
+        personality: config.id,
+        version: config.version,
+        latency,
+        finishReason: signal?.aborted ? 'ABORTED' : 'STOP'
+      };
+      await saveMessage(conversationId, 'assistant', fullText, mode, enrichedMetadata);
+    }
+
+    // 7. Send final events
+    sendEvent('metadata', { latency, provider: 'gemini', model: aiConfig.model });
+    sendEvent('end', { finishReason: signal?.aborted ? 'ABORTED' : 'STOP' });
+
+    logInfo('AI Stream Successful', {
+      requestId: reqId,
+      userId,
+      conversationId,
+      latencyMs: latency,
+      aborted: signal?.aborted ?? false
+    });
+
+  } catch (error) {
+    const latency = Date.now() - startTime;
+    logError('AI Stream Failed', error, { requestId: reqId, userId, conversationId, latencyMs: latency });
+    sendEvent('error', { message: error.message || 'An unexpected error occurred.' });
+  } finally {
+    res.end();
+  }
+}

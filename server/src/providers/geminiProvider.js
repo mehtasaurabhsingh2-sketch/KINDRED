@@ -56,16 +56,14 @@ const generateMessage = async ({ systemPrompt, messages, generationConfig = {} }
 
     // 3. Format the chat history for Gemini
     // Gemini expects an array of { role: 'user' | 'model', parts: [{ text }] }
-    let formattedHistory = (messages || []).slice(0, -1).map(msg => ({
+    const formattedHistory = (messages || []).slice(0, -1).map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }]
     }));
     
     // Gemini STRICTLY requires the history to start with a 'user' role.
-    // Since our DB stores the initial AI greeting first, we must drop any leading 'model' messages.
-    while (formattedHistory.length > 0 && formattedHistory[0].role === 'model') {
-      formattedHistory.shift();
-    }
+    const startIndex = formattedHistory.findIndex(m => m.role === 'user');
+    const sanitizedHistory = startIndex >= 0 ? formattedHistory.slice(startIndex) : [];
     
     // The actual message to send is the last one in the array
     const latestMessage = messages && messages.length > 0 ? messages[messages.length - 1].content : '';
@@ -76,7 +74,7 @@ const generateMessage = async ({ systemPrompt, messages, generationConfig = {} }
 
     // 4. Start Chat Session
     const chat = model.startChat({
-      history: formattedHistory,
+      history: sanitizedHistory,
       generationConfig: finalConfig,
     });
 
@@ -109,5 +107,69 @@ const generateMessage = async ({ systemPrompt, messages, generationConfig = {} }
 };
 
 module.exports = {
-  generateMessage
+  generateMessage,
+  generateMessageStream
 };
+
+/**
+ * Async generator that streams tokens from the Gemini API.
+ * This function has ZERO knowledge of SSE, Express, or Firestore.
+ * It simply yields raw text chunk strings as they arrive.
+ * 
+ * Expected input: { systemPrompt, messages, generationConfig, signal }
+ * Yields: string (individual token chunks)
+ */
+async function* generateMessageStream({ systemPrompt, messages, generationConfig = {}, signal }) {
+  if (!genAI) {
+    throw new Error('Gemini API is not properly initialized on the server.');
+  }
+
+  const modelName = aiConfig.model;
+
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    systemInstruction: systemPrompt || undefined,
+  });
+
+  const finalConfig = {
+    temperature: generationConfig.temperature ?? 0.7,
+    maxOutputTokens: generationConfig.maxOutputTokens ?? aiConfig.maxOutputTokens,
+    topP: generationConfig.topP,
+    topK: generationConfig.topK,
+  };
+
+  // Sanitize history (identical logic to generateMessage)
+  const formattedHistory = (messages || []).slice(0, -1).map(msg => ({
+    role: msg.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: msg.content }]
+  }));
+  const startIndex = formattedHistory.findIndex(m => m.role === 'user');
+  const sanitizedHistory = startIndex >= 0 ? formattedHistory.slice(startIndex) : [];
+
+  const latestMessage = messages && messages.length > 0 ? messages[messages.length - 1].content : '';
+  if (!latestMessage) {
+    throw new Error('No user message provided to generateMessageStream.');
+  }
+
+  const chat = model.startChat({
+    history: sanitizedHistory,
+    generationConfig: finalConfig,
+  });
+
+  try {
+    const result = await chat.sendMessageStream(latestMessage);
+
+    for await (const chunk of result.stream) {
+      // Respect AbortController signal
+      if (signal?.aborted) {
+        break;
+      }
+      const text = chunk.text();
+      if (text) {
+        yield text;
+      }
+    }
+  } catch (error) {
+    throw mapGeminiError(error);
+  }
+}
