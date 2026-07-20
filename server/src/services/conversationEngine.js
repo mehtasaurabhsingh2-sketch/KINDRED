@@ -1,7 +1,8 @@
 const { getProvider } = require('../providers/providerFactory');
 const { logInfo, logError } = require('../utils/logger');
-const { buildSystemPrompt } = require('./promptService');
+const { buildSystemPrompt, personalitiesConfig } = require('./promptService');
 const { saveMessage, getRecentMessages } = require('./conversationService');
+const { PERSONALITIES } = require('../constants');
 const aiConfig = require('../config/aiConfig');
 const AppError = require('../utils/AppError');
 
@@ -17,9 +18,6 @@ const processChatRequest = async ({ userId, conversationId, message, mode, reqId
 
     // 2. Fetch Context (Recent History)
     const recentMessages = await getRecentMessages(conversationId, aiConfig.maxHistory);
-    
-    const { buildSystemPrompt, personalitiesConfig } = require('./promptService');
-    const { PERSONALITIES } = require('../constants');
     const config = personalitiesConfig[mode] || personalitiesConfig[PERSONALITIES.FRIEND];
 
     // 3. Build Prompt Layers
@@ -136,8 +134,6 @@ async function processChatStream({ userId, conversationId, message, mode, res, s
 
     // 2. Fetch Context + Build Prompt
     const recentMessages = await getRecentMessages(conversationId, aiConfig.maxHistory);
-    const { buildSystemPrompt, personalitiesConfig } = require('./promptService');
-    const { PERSONALITIES } = require('../constants');
     const config = personalitiesConfig[mode] || personalitiesConfig[PERSONALITIES.FRIEND];
     const systemPrompt = buildSystemPrompt({ mode, userProfile: {}, conversationSummary: '' });
 

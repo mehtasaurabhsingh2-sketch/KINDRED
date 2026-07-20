@@ -11,12 +11,15 @@ const GEMINI_MODELS = {
   PRO: 'gemini-1.5-pro'
 };
 
-// Kindred Personalities
 const PERSONALITIES = {
   FRIEND: 'friend',
   MENTOR: 'mentor',
-  COACH: 'coach',
-  PHILOSOPHER: 'philosopher'
+  MOTIVATION: 'motivation',
+  STUDY: 'study',
+  RELATIONSHIP: 'relationship',
+  WELLNESS: 'wellness',
+  CAREER: 'career',
+  CUSTOM: 'custom'
 };
 
 module.exports = {

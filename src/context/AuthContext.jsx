@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../services/firebase';
 import { loginUser, registerUser, loginWithGoogle, logoutUser } from '../services/auth';
 import { getUserProfile } from '../services/firestore';
 
@@ -15,7 +16,20 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        const { profile } = await getUserProfile(user.uid);
+        let { profile } = await getUserProfile(user.uid);
+        if (!profile) {
+          // If auth exists but Firestore doc doesn't (e.g. after emulator restart), create it
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            displayName: user.displayName || 'User',
+            email: user.email,
+            photoURL: user.photoURL || '',
+            createdAt: new Date().toISOString(),
+            favoriteMode: 'friend',
+            themeId: 'aurora'
+          });
+          profile = (await getUserProfile(user.uid)).profile;
+        }
         setUserProfile(profile);
       } else {
         setUserProfile(null);
