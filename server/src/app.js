@@ -27,6 +27,13 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
+    // In development: allow any localhost origin regardless of port.
+    // Vite picks ports dynamically (5173, 5174, 5175…) so locking to a
+    // single port causes "Failed to create conversation via API" errors.
+    if (process.env.NODE_ENV === 'development' && /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+
     // Check if the origin matches our explicit allowed list
     if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
       return callback(null, true);

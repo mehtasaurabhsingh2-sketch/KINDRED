@@ -63,11 +63,21 @@ const Chat = () => {
           if (!isCancelled) {
             console.error('Failed to initialize chat:', err);
             setError('Failed to initialize conversation. Please ensure the backend is running.');
-            // Reset the guard on failure so the user can retry.
-            initializingRef.current = false;
           }
         } finally {
-          if (!isCancelled) setIsInitializing(false);
+          // ─── Guard reset ───────────────────────────────────────────────
+          // Only reset initializingRef when this specific request was NOT
+          // cancelled. If it was cancelled, the cleanup already reset the ref
+          // and a new request may have already set it to true — resetting it
+          // here would unblock a third, unwanted creation attempt.
+          if (!isCancelled) {
+            initializingRef.current = false;
+          }
+          // ─── Spinner ────────────────────────────────────────────────────
+          // Always clear the loading spinner, even for stale (cancelled)
+          // requests. React 18+ safely ignores setState calls after unmount.
+          // Without this, a dep-change mid-flight leaves the spinner frozen.
+          setIsInitializing(false);
         }
       }
     };
@@ -76,6 +86,12 @@ const Chat = () => {
 
     return () => {
       isCancelled = true;
+      // ─── Critical: reset the guard in the cleanup ────────────────────
+      // If deps changed while an API call was in flight, the next effect run
+      // must be allowed to create a new conversation. Without this reset,
+      // the new run sees initializingRef=true and bails out silently, leaving
+      // the user with a frozen spinner and no conversation.
+      initializingRef.current = false;
     };
   }, [modeId, cid, currentUser, navigate]);
 
