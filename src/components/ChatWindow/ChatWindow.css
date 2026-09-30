@@ -16,7 +16,74 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  /* push the New Chat button to the far right */
+  justify-content: space-between;
 }
+
+/* Left group — icon + title */
+.chat-header-icon,
+.chat-header-info {
+  flex-shrink: 0;
+}
+
+/* Take up the space between left group and New Chat button */
+.chat-header-info {
+  flex: 1;
+}
+
+/* ─── New Chat Button ─────────────────────────────────────── */
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 0.625rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast), transform var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.new-chat-btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--color-text);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.new-chat-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Spinner animation reuses Loader2 from lucide-react */
+.new-chat-spinner {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* On small screens: hide the text label, show icon only */
+@media (max-width: 600px) {
+  .new-chat-label {
+    display: none;
+  }
+  .new-chat-btn {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  }
+}
+
 
 .chat-header-icon {
   width: 48px;

@@ -24,13 +24,21 @@ const Chat = () => {
   // Without this, two conversations would be created on the first mount.
   const initializingRef = useRef(false);
 
+  // Separate guard for the imperative "New Chat" button — prevents double-clicks
+  // from racing each other while a creation request is already in flight.
+  const isCreatingRef = useRef(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+
   const selectedMode = personalities[modeId];
 
   useEffect(() => {
+    let isCancelled = false;
+
     const initializeChat = async () => {
       // Path A: a specific conversation ID is already in the URL — just open it.
       if (cid) {
         setActiveConvoId(cid);
+        initializingRef.current = false;
         return;
       }
 
@@ -41,28 +49,66 @@ const Chat = () => {
         initializingRef.current = true;
 
         setIsInitializing(true);
+        setError(null);
         try {
           const token = await currentUser.getIdToken();
           const title = `${personalities[modeId]?.name || 'New'} Conversation`;
           const { conversationId } = await createConversationApi(token, modeId, title);
 
-          if (conversationId) {
+          if (!isCancelled && conversationId) {
             // Replace the current history entry so the Back button is not broken.
             navigate(`/chat?mode=${modeId}&cid=${conversationId}`, { replace: true });
           }
         } catch (err) {
-          console.error('Failed to initialize chat:', err);
-          setError('Failed to initialize conversation. Please ensure the backend is running.');
-          // Reset the guard on failure so the user can retry.
-          initializingRef.current = false;
+          if (!isCancelled) {
+            console.error('Failed to initialize chat:', err);
+            setError('Failed to initialize conversation. Please ensure the backend is running.');
+            // Reset the guard on failure so the user can retry.
+            initializingRef.current = false;
+          }
         } finally {
-          setIsInitializing(false);
+          if (!isCancelled) setIsInitializing(false);
         }
       }
     };
 
     initializeChat();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [modeId, cid, currentUser, navigate]);
+
+  /**
+   * Imperative handler for the "New Chat" button.
+   * Runs independently of the useEffect lifecycle — always creates a fresh
+   * conversation in the current mode and navigates to it.
+   */
+  const handleNewChat = async () => {
+    if (!modeId || !currentUser || isCreatingRef.current) return;
+
+    isCreatingRef.current = true;
+    setIsCreatingChat(true);
+    setError(null);
+
+    try {
+      const token = await currentUser.getIdToken();
+      const title = `${personalities[modeId]?.name || 'New'} Conversation`;
+      const { conversationId } = await createConversationApi(token, modeId, title);
+
+      if (conversationId) {
+        // Push a new history entry so the user can press Back to return to the
+        // previous conversation. We do NOT use replace:true here.
+        navigate(`/chat?mode=${modeId}&cid=${conversationId}`);
+      }
+    } catch (err) {
+      console.error('Failed to create new chat:', err);
+      setError('Failed to start a new conversation. Please try again.');
+    } finally {
+      isCreatingRef.current = false;
+      setIsCreatingChat(false);
+    }
+  };
 
   return (
     <div className="chat-page-layout">
@@ -77,12 +123,18 @@ const Chat = () => {
                 setError(null);
                 navigate('/dashboard#modes');
               }}
+              onRetry={!activeConvoId ? handleNewChat : null}
             />
           </div>
         ) : isInitializing ? (
           <LoadingSpinner fullScreen={false} />
         ) : selectedMode && activeConvoId ? (
-          <ChatWindow mode={selectedMode} conversationId={activeConvoId} />
+          <ChatWindow
+            mode={selectedMode}
+            conversationId={activeConvoId}
+            onNewChat={handleNewChat}
+            isCreatingChat={isCreatingChat}
+          />
         ) : (
           <div className="no-mode-selected">
             <h2>Select a Companion</h2>

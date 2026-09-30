@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
-import { Send, Square } from 'lucide-react';
+import { Send, Square, SquarePen, Loader2 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import ChatBubble from '../ChatBubble/ChatBubble';
 import { AuthContext } from '../../context/AuthContext';
@@ -12,7 +12,7 @@ import './ChatWindow.css';
 
 
 
-const ChatWindow = ({ mode, conversationId }) => {
+const ChatWindow = ({ mode, conversationId, onNewChat, isCreatingChat = false }) => {
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -212,6 +212,25 @@ const ChatWindow = ({ mode, conversationId }) => {
             {isStreaming ? 'Thinking…' : 'Online'}
           </div>
         </div>
+        {onNewChat && (
+          <button
+            id="new-chat-btn"
+            className="new-chat-btn"
+            onClick={onNewChat}
+            disabled={isCreatingChat || isStreaming}
+            title="Start a new conversation in this mode"
+            aria-label="Start new conversation"
+          >
+            {isCreatingChat ? (
+              <Loader2 size={16} className="new-chat-spinner" />
+            ) : (
+              <SquarePen size={16} />
+            )}
+            <span className="new-chat-label">
+              {isCreatingChat ? 'Creating…' : 'New Chat'}
+            </span>
+          </button>
+        )}
       </header>
 
       <div
