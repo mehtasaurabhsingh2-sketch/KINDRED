@@ -11,6 +11,7 @@ const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
 const Settings = lazy(() => import('../pages/Settings'));
 const History = lazy(() => import('../pages/History'));
+const SecurityLab = lazy(() => import('../pages/SecurityLab'));
 
 const AppRoutes = () => {
   return (
@@ -39,6 +40,13 @@ const AppRoutes = () => {
         <Route path="/settings" element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        } />
+
+        {/* ── Security Lab ────────────────────────────────────────────────── */}
+        <Route path="/security-lab" element={
+          <ProtectedRoute>
+            <SecurityLab />
           </ProtectedRoute>
         } />
         

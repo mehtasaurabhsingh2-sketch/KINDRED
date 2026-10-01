@@ -59,3 +59,30 @@ export const chatStreamApi = async (token, payload, signal) => {
 
   return response;
 };
+
+// ── Security Lab ──────────────────────────────────────────────────────────────
+
+/**
+ * Calls the cloaking-demo endpoint and returns the decision payload.
+ * Isolated from all chat functionality.
+ *
+ * @param {string} token - Firebase Auth JWT
+ * @returns {Promise<object>} - { profile, reason, content, meta, requestId }
+ */
+export const fetchCloakingDemo = async (token) => {
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/api/security-lab/cloaking-demo`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.error?.message || errorData?.message || 'Security Lab request failed.');
+  }
+
+  const data = await response.json();
+  return data.data; // { profile, reason, content, meta, requestId, ... }
+};

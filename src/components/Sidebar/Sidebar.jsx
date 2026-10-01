@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, MessageSquare, Settings, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, Settings, Users, LogOut, FlaskConical } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import './Sidebar.css';
 
@@ -34,6 +34,18 @@ const Sidebar = () => {
         <NavLink to="/dashboard#modes" className="sidebar-link">
           <Users size={20} className="sidebar-link-icon" />
           <span>Modes</span>
+        </NavLink>
+      </div>
+
+      {/* ── Labs ──────────────────────────────────────────────────────────── */}
+      <div className="sidebar-section">
+        <h3 className="sidebar-heading">Labs</h3>
+        <NavLink
+          to="/security-lab"
+          className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
+        >
+          <FlaskConical size={20} className="sidebar-link-icon" />
+          <span>Security Lab</span>
         </NavLink>
       </div>
 
