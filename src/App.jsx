@@ -17,7 +17,7 @@ function App() {
             <StyleSwitcher />
             <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
               <Navbar />
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 <AppRoutes />
               </div>
               <Footer />

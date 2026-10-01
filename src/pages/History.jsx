@@ -17,6 +17,7 @@ const History = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null); // inline confirm state
 
   const fetchInitialChats = useCallback(async () => {
     if (!currentUser) return;
@@ -74,22 +75,26 @@ const History = () => {
     navigate(`/chat?mode=${modeId}&cid=${conversationId}`);
   };
 
-  const handleDelete = async (e, conversationId) => {
-    e.stopPropagation(); // Prevent opening the chat when clicking delete
-    
-    const confirmDelete = window.confirm("Are you sure you want to permanently delete this conversation?");
-    if (!confirmDelete) return;
+  const handleDeleteRequest = (e, conversationId) => {
+    e.stopPropagation();
+    setPendingDeleteId(conversationId);
+  };
 
+  const handleDeleteConfirm = async (e, conversationId) => {
+    e.stopPropagation();
+    setPendingDeleteId(null);
     // Optimistically update UI
     setConversations(prev => prev.filter(c => c.id !== conversationId));
-
     const { error } = await deleteConversation(conversationId);
     if (error) {
-      console.error("Failed to delete:", error);
-      alert("Failed to delete conversation. Please try again.");
-      // If it fails, refresh the list to ensure accurate state
-      fetchInitialChats();
+      console.error('Failed to delete:', error);
+      fetchInitialChats(); // restore list on failure
     }
+  };
+
+  const handleDeleteCancel = (e) => {
+    e.stopPropagation();
+    setPendingDeleteId(null);
   };
 
   if (isLoading && conversations.length === 0) {
@@ -131,7 +136,7 @@ const History = () => {
                 <div 
                   key={chat.id} 
                   className="history-card"
-                  onClick={() => handleOpenChat(chat.mode, chat.id)}
+                  onClick={() => pendingDeleteId !== chat.id && handleOpenChat(chat.mode, chat.id)}
                 >
                   <div className="history-card-icon" style={{ backgroundColor: `${personality.color}20`, color: personality.color }}>
                     <IconComponent size={24} />
@@ -147,15 +152,33 @@ const History = () => {
                     </div>
                   </div>
                   <div className="history-card-action">
-                    <button 
-                      className="delete-chat-btn" 
-                      onClick={(e) => handleDelete(e, chat.id)}
-                      title="Delete Conversation"
-                      aria-label="Delete Conversation"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                    <ChevronRight size={20} style={{ marginLeft: '10px' }} />
+                    {pendingDeleteId === chat.id ? (
+                      <div className="delete-confirm-inline" onClick={e => e.stopPropagation()}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginRight: '0.5rem' }}>Delete?</span>
+                        <button
+                          className="delete-confirm-yes"
+                          onClick={(e) => handleDeleteConfirm(e, chat.id)}
+                          title="Yes, delete"
+                        >Yes</button>
+                        <button
+                          className="delete-confirm-no"
+                          onClick={handleDeleteCancel}
+                          title="Cancel"
+                        >No</button>
+                      </div>
+                    ) : (
+                      <>
+                        <button 
+                          className="delete-chat-btn" 
+                          onClick={(e) => handleDeleteRequest(e, chat.id)}
+                          title="Delete Conversation"
+                          aria-label="Delete Conversation"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                        <ChevronRight size={20} style={{ marginLeft: '10px' }} />
+                      </>
+                    )}
                   </div>
                 </div>
               );

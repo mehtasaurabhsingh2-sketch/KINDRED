@@ -37,6 +37,7 @@ const Settings = () => {
     const updates = {
       displayName,
       favoriteMode,
+      themeId: activeThemeId, // persist theme choice so it survives page refresh
     };
 
     const { error } = await updateUserProfile(currentUser.uid, updates);

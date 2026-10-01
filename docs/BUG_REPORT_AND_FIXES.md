@@ -143,3 +143,15 @@ During this inspection, **6 distinct issues/bugs** were identified and successfu
 | New Chat button → New cid | ✅ Pass | `cid = ..._friend_1790775026089` — distinct from first |
 | Old conversation accessible by URL | ✅ Pass | Navigation to old `cid` URL loaded without error |
 | No double conversation creation | ✅ Pass | `isCreatingRef` guard confirmed no duplicates |
+
+---
+
+### Bug 9: Chat Message Scrolling Broken by Body-Level Lock
+- **Location:** `src/App.jsx`, `src/index.css`
+- **Symptom:** After applying `body.chat-open { overflow: hidden }` to prevent the whole page from scrolling, the chat messages themselves became unscrollable.
+- **Root Cause:** The `.chat-messages` container relies on `flex: 1` and `overflow-y: auto`. However, its grandparent container in `App.jsx` (`<div style={{ flex: 1, ... }}>`) lacked a minimum height constraint. In CSS flexbox, flex items default to `min-height: auto`, allowing them to grow indefinitely with their content. This caused the chat layout to stretch off-screen instead of overflowing internally. Additionally, the presence of the global `<Footer>` on the Chat route caused the total content height to exceed `100vh`.
+- **Fix:** 
+  1. Added `minHeight: 0` to the `flex: 1` wrapper in `App.jsx` to restrict its size to the flex basis.
+  2. Used `body.chat-open .footer { display: none; }` in `index.css` to hide the footer purely via CSS on the full-screen chat page.
+  3. Added `body.chat-open #root { height: 100svh; overflow: hidden; }` and `body.chat-open .app-container { height: 100%; overflow: hidden; }` to perfectly constrain the layout tree on the chat route.
+- **Verification:** The page no longer shifts when new messages arrive, and scrolling up through chat history works perfectly.

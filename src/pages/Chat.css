@@ -6,7 +6,7 @@ body.chat-open {
 
 .chat-page-layout {
   display: flex;
-  height: 100%;
+  height: calc(100dvh - 76px); /* navbar is ~76px; dvh avoids mobile toolbar issues */
   overflow: hidden;
 }
 

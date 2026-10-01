@@ -66,6 +66,21 @@ body {
   box-sizing: border-box;
 }
 
+/* Chat Layout Locks */
+body.chat-open #root {
+  height: 100svh;
+  overflow: hidden;
+}
+
+body.chat-open .app-container {
+  height: 100%;
+  overflow: hidden;
+}
+
+body.chat-open .footer {
+  display: none;
+}
+
 h1,
 h2 {
   font-family: var(--heading);
