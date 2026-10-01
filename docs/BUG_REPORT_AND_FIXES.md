@@ -147,11 +147,13 @@ During this inspection, **6 distinct issues/bugs** were identified and successfu
 ---
 
 ### Bug 9: Chat Message Scrolling Broken by Body-Level Lock
-- **Location:** `src/App.jsx`, `src/index.css`
-- **Symptom:** After applying `body.chat-open { overflow: hidden }` to prevent the whole page from scrolling, the chat messages themselves became unscrollable.
-- **Root Cause:** The `.chat-messages` container relies on `flex: 1` and `overflow-y: auto`. However, its grandparent container in `App.jsx` (`<div style={{ flex: 1, ... }}>`) lacked a minimum height constraint. In CSS flexbox, flex items default to `min-height: auto`, allowing them to grow indefinitely with their content. This caused the chat layout to stretch off-screen instead of overflowing internally. Additionally, the presence of the global `<Footer>` on the Chat route caused the total content height to exceed `100vh`.
+- **Location:** `src/App.jsx`, `src/index.css`, `Chat.css`, `ChatWindow.css`
+- **Symptom:** After applying `body.chat-open { overflow: hidden }` to prevent the whole page from scrolling, the chat messages themselves became unscrollable. The layout was shifted up and the footer was overlapping or visible.
+- **Root Cause:** 
+  1. The `.chat-messages` container relies on `flex: 1` and `overflow-y: auto`. However, its grandparent container in `App.jsx` lacked a minimum height constraint, and `.chat-page-layout` was using `height: 100%` inside a flex column. In CSS flexbox, `height: %` fails to resolve if the parent's height is determined by content, causing nested children to expand indefinitely.
+  2. The `body.chat-open .footer { display: none; }` rule was overridden by component-level CSS specificity (`Footer.css`), leaving the footer visible and pushing the total height > 100vh.
 - **Fix:** 
-  1. Added `minHeight: 0` to the `flex: 1` wrapper in `App.jsx` to restrict its size to the flex basis.
-  2. Used `body.chat-open .footer { display: none; }` in `index.css` to hide the footer purely via CSS on the full-screen chat page.
-  3. Added `body.chat-open #root { height: 100svh; overflow: hidden; }` and `body.chat-open .app-container { height: 100%; overflow: hidden; }` to perfectly constrain the layout tree on the chat route.
-- **Verification:** The page no longer shifts when new messages arrive, and scrolling up through chat history works perfectly.
+  1. Added `minHeight: 0` to the `flex: 1` wrapper in `App.jsx`.
+  2. Changed `height: 100%` to `flex: 1; min-height: 0;` in both `.chat-page-layout` and `.chat-window`. This ensures they respect flex layout constraints and strictly adhere to their parent's boundaries.
+  3. Added `!important` to `body.chat-open .footer { display: none !important; }` in `index.css` to guarantee it hides regardless of Vite CSS import order.
+- **Verification:** The entire layout is now rock-solid. The chat messages properly overflow internally, the scrollbar appears, and the footer is completely removed from the viewport on the chat route.

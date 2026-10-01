@@ -78,7 +78,7 @@ body.chat-open .app-container {
 }
 
 body.chat-open .footer {
-  display: none;
+  display: none !important;
 }
 
 h1,
