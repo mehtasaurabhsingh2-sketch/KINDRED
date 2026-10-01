@@ -4,7 +4,7 @@ const { logError } = require('../utils/logger');
  * Centralized error handling middleware.
  * Enforces a strict JSON format: { success, message, data, error }
  */
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   // Log the error securely
   logError('Unhandled Error', err, {
     requestId: req.requestId,

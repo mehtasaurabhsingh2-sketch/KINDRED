@@ -1,15 +1,12 @@
 const { processChatRequest, processChatStream } = require('../services/conversationEngine');
 const { saveMessage } = require('../services/conversationService');
 const { db } = require('../config/firebaseAdmin');
-const { logError } = require('../utils/logger');
 const personalitiesConfig = require('../config/personalities');
-const { PERSONALITIES } = require('../constants');
 
 const handleCreateConversation = async (req, res, next) => {
   try {
     const { mode, title } = req.body;
     const userId = req.user.uid;
-    const reqId = req.requestId;
 
     if (!mode || !personalitiesConfig[mode]) {
       return res.status(400).json({ 
@@ -146,7 +143,7 @@ const handleTitle = async (req, res, next) => {
  * SSE Streaming handler for POST /api/chat/stream
  * Sets up Server-Sent Events, creates an AbortController, and delegates to the engine.
  */
-const handleChatStream = async (req, res, next) => {
+const handleChatStream = async (req, res, _next) => {
   const { message, conversationId, mode } = req.body;
   const userId = req.user.uid;
   const reqId = req.requestId;

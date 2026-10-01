@@ -6,7 +6,7 @@
  * @param {Object} promptData The fully constructed prompt object.
  * @returns {Promise<String>} The text response from the AI.
  */
-export const generateResponse = async (promptData) => {
+export const generateResponse = async (_promptData) => {
   // TODO: Phase 3 - Connect to actual AI APIs.
   // For now, return a placeholder so the UI has something to render.
   return new Promise((resolve) => {

@@ -5,7 +5,7 @@ import { AuthContext } from '../../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout, isAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -38,16 +38,18 @@ const Sidebar = () => {
       </div>
 
       {/* ── Labs ──────────────────────────────────────────────────────────── */}
-      <div className="sidebar-section">
-        <h3 className="sidebar-heading">Labs</h3>
-        <NavLink
-          to="/security-lab"
-          className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
-        >
-          <FlaskConical size={20} className="sidebar-link-icon" />
-          <span>Security Lab</span>
-        </NavLink>
-      </div>
+      {isAdmin && (
+        <div className="sidebar-section">
+          <h3 className="sidebar-heading">Labs</h3>
+          <NavLink
+            to="/security-lab"
+            className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
+          >
+            <FlaskConical size={20} className="sidebar-link-icon" />
+            <span>Security Lab</span>
+          </NavLink>
+        </div>
+      )}
 
       <div className="sidebar-section" style={{ marginTop: 'auto' }}>
         <NavLink to="/settings" className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}>

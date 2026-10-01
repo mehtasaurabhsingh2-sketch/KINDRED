@@ -35,5 +35,6 @@ try {
 
 module.exports = {
   db,
-  auth
+  auth,
+  isInitialized
 };

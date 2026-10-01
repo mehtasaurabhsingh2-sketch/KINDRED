@@ -18,43 +18,47 @@ const History = () => {
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchChats = useCallback(async (isLoadMore = false) => {
+  const fetchInitialChats = useCallback(async () => {
     if (!currentUser) return;
-    
-    if (isLoadMore) {
-      setIsLoadingMore(true);
-    } else {
-      setIsLoading(true);
-    }
-
+    setIsLoading(true);
     const { conversations: newChats, lastVisible: newLastVisible, error } = await getPaginatedUserConversations(
       currentUser.uid, 
-      isLoadMore ? lastVisible : null, 
+      null, 
       10
     );
 
     if (error) {
       console.error("Error loading chats:", error);
     } else {
-      if (newChats.length < 10) {
-        setHasMore(false);
-      }
-      
-      if (isLoadMore) {
-        setConversations(prev => [...prev, ...newChats]);
-      } else {
-        setConversations(newChats);
-      }
+      setConversations(newChats);
       setLastVisible(newLastVisible);
+      setHasMore(newChats.length >= 10);
     }
-
     setIsLoading(false);
+  }, [currentUser]);
+
+  const fetchMoreChats = useCallback(async () => {
+    if (!currentUser || !lastVisible || isLoadingMore) return;
+    setIsLoadingMore(true);
+    const { conversations: newChats, lastVisible: newLastVisible, error } = await getPaginatedUserConversations(
+      currentUser.uid, 
+      lastVisible, 
+      10
+    );
+
+    if (error) {
+      console.error("Error loading more chats:", error);
+    } else {
+      setConversations(prev => [...prev, ...newChats]);
+      setLastVisible(newLastVisible);
+      setHasMore(newChats.length >= 10);
+    }
     setIsLoadingMore(false);
-  }, [currentUser, lastVisible]);
+  }, [currentUser, lastVisible, isLoadingMore]);
 
   useEffect(() => {
-    fetchChats();
-  }, [fetchChats]);
+    fetchInitialChats();
+  }, [fetchInitialChats]);
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
@@ -84,7 +88,7 @@ const History = () => {
       console.error("Failed to delete:", error);
       alert("Failed to delete conversation. Please try again.");
       // If it fails, refresh the list to ensure accurate state
-      fetchChats();
+      fetchInitialChats();
     }
   };
 
@@ -163,7 +167,7 @@ const History = () => {
           <div className="load-more-container">
             <button 
               className="btn-secondary load-more-btn" 
-              onClick={() => fetchChats(true)}
+              onClick={fetchMoreChats}
               disabled={isLoadingMore}
             >
               {isLoadingMore ? 'Loading...' : 'Load More'}

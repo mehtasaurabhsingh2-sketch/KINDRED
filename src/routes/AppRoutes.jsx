@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
+import AdminRoute from '../components/AdminRoute';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Home = lazy(() => import('../pages/Home'));
@@ -45,9 +46,9 @@ const AppRoutes = () => {
 
         {/* ── Security Lab ────────────────────────────────────────────────── */}
         <Route path="/security-lab" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <SecurityLab />
-          </ProtectedRoute>
+          </AdminRoute>
         } />
         
         <Route path="*" element={<NotFound />} />

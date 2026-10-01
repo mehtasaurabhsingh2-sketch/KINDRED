@@ -78,6 +78,10 @@ const SecurityLab = () => {
         <p className="lab-subtitle">
           Controlled cybersecurity experiments — for learning and interview demonstration.
         </p>
+        
+        <div style={{ marginBottom: '2rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
+          <ShieldCheck size={16} /> Administrator / Developer Environment
+        </div>
 
         {/* ── Cloaking Demo Card ─────────────────────────────────────────── */}
         <div className="demo-card">

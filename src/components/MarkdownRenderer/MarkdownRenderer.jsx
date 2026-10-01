@@ -13,7 +13,7 @@ const MarkdownRenderer = ({ content, isStreaming = false }) => {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({ _node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
             if (!inline && language) {

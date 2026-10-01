@@ -10,12 +10,17 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
+        // Check admin claim
+        const idTokenResult = await user.getIdTokenResult();
+        setIsAdmin(!!idTokenResult.claims.admin);
+
         let { profile } = await getUserProfile(user.uid);
         if (!profile) {
           // If auth exists but Firestore doc doesn't (e.g. after emulator restart), create it
@@ -33,6 +38,7 @@ export const AuthProvider = ({ children }) => {
         setUserProfile(profile);
       } else {
         setUserProfile(null);
+        setIsAdmin(false);
       }
       setLoading(false);
     });
@@ -44,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     userProfile,
     setUserProfile,
+    isAdmin,
     loading,
     login: loginUser,
     register: registerUser,

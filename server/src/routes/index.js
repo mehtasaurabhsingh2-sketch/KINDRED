@@ -25,6 +25,7 @@ router.post('/api/title', apiLimiter, handleTitle);
 // Isolated from the chat system.  Only the cloaking-demo endpoint lives here.
 // All routes under /api/security-lab inherit the verifyFirebaseToken middleware
 // registered above for /api, matching the existing authenticated-dashboard pattern.
-router.get('/api/security-lab/cloaking-demo', apiLimiter, handleCloakingDemo);
+const requireAdmin = require('../middleware/requireAdmin');
+router.get('/api/security-lab/cloaking-demo', requireAdmin, apiLimiter, handleCloakingDemo);
 
 module.exports = router;

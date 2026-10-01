@@ -173,12 +173,12 @@ export const getMessages = async (conversationId) => {
 // Phase 3: AI Architecture Placeholders
 // ==========================================
 
-export const saveConversationSummary = async (conversationId, summaryText) => {
+export const saveConversationSummary = async (_conversationId, _summaryText) => {
   // TODO: Phase 3 - Store AI-generated summaries to save context window tokens
   return { summary: null, error: "Not implemented" };
 };
 
-export const getConversationSummary = async (conversationId) => {
+export const getConversationSummary = async (_conversationId) => {
   // TODO: Phase 3 - Retrieve summary for prompt injection
   return { summary: null, error: "Not implemented" };
 };

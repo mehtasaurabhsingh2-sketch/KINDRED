@@ -146,7 +146,35 @@ product.
 
 ---
 
-## 8. Security Limitations
+## 8. Access Control (Admin-Only)
+
+The Security Lab is intentionally restricted to an administrator rather than being exposed as a normal user feature. 
+
+- **Frontend:** The frontend hides the Security Lab in the navigation for normal users.
+- **Backend (The Real Boundary):** The actual security boundary is enforced on the Express backend via the `requireAdmin` middleware. 
+- **Firebase Claims:** When a request is made, the backend verifies the Firebase token and checks for a custom `admin: true` authorization claim. 
+  - `401 Unauthorized` is returned if the user is not authenticated.
+  - `403 Forbidden` is returned if the user is authenticated but lacks the admin claim.
+
+This means a user cannot gain access simply by manually navigating to the `/security-lab` route or directly calling the API.
+
+### Assigning Admin Access
+
+To grant a user access to the Security Lab, the project developer must use the provided admin utility script. This ensures normal users cannot give themselves admin privileges.
+
+```bash
+# In the server/ directory:
+node scripts/setAdmin.js <FIREBASE_USER_UID>
+```
+
+To remove admin access:
+```bash
+node scripts/setAdmin.js <FIREBASE_USER_UID> false
+```
+
+---
+
+## 9. Security Limitations
 
 - This is a **development-only educational demo**.  It should not be
   deployed to production as a live attack simulation without explicit
@@ -158,13 +186,20 @@ product.
 
 ---
 
-## 9. Interview Explanation
+## 10. Interview Explanation
 
 > *"I built a controlled demonstration inside KINDRED, my AI companion
 > application, showing how a server can inspect request context and select
 > different harmless response profiles.  The purpose was to understand the
 > mechanism behind cloaking — how the server-side decision is structured,
 > what signals it reads, and what the response difference looks like.*
+>
+> *The Security Lab is intentionally restricted to an administrator
+> rather than being exposed as a normal user feature. The frontend
+> hides it for normal users, but the actual security boundary is on
+> the Express backend, where the Firebase token is verified and an
+> admin authorization claim is checked. This means a user cannot gain
+> access simply by manually navigating to the route or calling the API.*
 >
 > *I deliberately kept the implementation observable: every decision is
 > written to the server log with the request ID, user-agent, auth state,

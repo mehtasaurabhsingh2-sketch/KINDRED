@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar/Sidebar';
 import ModeCard from '../components/ModeCard/ModeCard';
 import { personalities } from '../data/personalities';
 import { AuthContext } from '../context/AuthContext';
-import { getUserConversations, getMessages, createConversation } from '../services/firestore';
+import { getUserConversations, getMessages } from '../services/firestore';
 import LoadingSpinner from '../components/LoadingSpinner';
 import './Dashboard.css';
 

@@ -2,12 +2,12 @@
  * Safety layer to sanitize inputs and filter outputs.
  */
 
-export const validateInput = (inputText) => {
+export const validateInput = (_inputText) => {
   // TODO: Phase 3 - Check for malicious prompts or injections
   return true;
 };
 
-export const validateOutput = (outputText) => {
+export const validateOutput = (_outputText) => {
   // TODO: Phase 3 - Check AI output against safety guidelines
   return true;
 };
