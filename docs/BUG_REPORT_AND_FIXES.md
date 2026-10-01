@@ -157,3 +157,16 @@ During this inspection, **6 distinct issues/bugs** were identified and successfu
   2. Changed `height: 100%` to `flex: 1; min-height: 0;` in both `.chat-page-layout` and `.chat-window`. This ensures they respect flex layout constraints and strictly adhere to their parent's boundaries.
   3. Added `!important` to `body.chat-open .footer { display: none !important; }` in `index.css` to guarantee it hides regardless of Vite CSS import order.
 - **Verification:** The entire layout is now rock-solid. The chat messages properly overflow internally, the scrollbar appears, and the footer is completely removed from the viewport on the chat route.
+
+---
+
+### Bug 10: Security Lab Layout Scrolling & Text Tearing
+- **Location:** `src/pages/SecurityLab.css`
+- **Symptom:** The Security Lab content was completely unscrollable, preventing users from reading the educational content below the fold. Additionally, long text strings (like User-Agent and Reason) were awkwardly wrapping in the middle of words.
+- **Root Cause:** 
+  1. Because the Security Lab is included in the `AppLayout` full-screen lock (to hide the footer and fix the viewport), its internal layout must manage its own scroll. While `.security-lab-content` had `overflow-y: auto`, its parent `.security-lab-layout` lacked `flex: 1; min-height: 0;`. This caused the parent to stretch indefinitely, pushing the scrollbar out of view entirely.
+  2. The `.info-value` elements used `word-break: break-all;`, which aggressively breaks strings anywhere, tearing English words apart.
+- **Fix:** 
+  1. Added `flex: 1; min-height: 0;` to `.security-lab-layout`.
+  2. Changed `.info-value` from `word-break: break-all;` to `word-break: break-word;`.
+- **Verification:** The Security Lab now perfectly fits the viewport, features a functional internal scrollbar, and text wraps cleanly without shredding words.
