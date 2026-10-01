@@ -1,6 +1,12 @@
+/* Prevent the entire page from scrolling while chat is open.
+   Only the .chat-messages container scrolls internally. */
+body.chat-open {
+  overflow: hidden;
+}
+
 .chat-page-layout {
   display: flex;
-  height: calc(100vh - 76px); /* subtract navbar height approx */
+  height: 100%;
   overflow: hidden;
 }
 

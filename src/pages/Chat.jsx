@@ -31,6 +31,13 @@ const Chat = () => {
 
   const selectedMode = personalities[modeId];
 
+  // Lock the body so only the chat message list scrolls — not the whole page.
+  // Cleaned up automatically when the user leaves the chat route.
+  useEffect(() => {
+    document.body.classList.add('chat-open');
+    return () => document.body.classList.remove('chat-open');
+  }, []);
+
   useEffect(() => {
     let isCancelled = false;
 
